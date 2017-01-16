@@ -8,6 +8,7 @@ shaking = false
 shaketimer = 0
 score = 0
 level = 1
+gameover = false
 
 tacos = {}
 bullets = {}
@@ -21,7 +22,46 @@ function _init()
 	create_stars()
 end
 
+function reset_game(lvl)
+	lvl = 1
+
+	p = player()
+	t = 0
+	lastshot = 0
+	lasttaco = 0
+	shaking = false
+	shaketimer = 0
+	score = 0
+	level = lvl
+	gameover = false
+
+	tacos = {}
+	bullets = {}
+	enemies = {}
+	enemy_bullets = {}
+	stars = {}
+	explosions = {}
+end
+
 function _update()
+	if (gameover) then
+		gameover_update()
+	else
+		game_update()
+	end
+end
+
+function _draw()
+	cls()
+
+	if (gameover) then
+		gameover_draw()
+	else
+		game_draw()
+	end
+end
+
+function game_update()
 	t = t+1
 	move()
 
@@ -36,6 +76,8 @@ function _update()
 	if (rnd(300)<5) then
 		spawn_cryer()
 	end
+
+	update_stars()
 
 	foreach(tacos, function(t)
 		t.y = t.y + t.dy
@@ -56,6 +98,7 @@ function _update()
 			score-=5
 			p.health-=1
 			del(enemy_bullets,b)
+			if (p.health < 1) gameover = true
 		end
 	end)
 
@@ -78,14 +121,6 @@ function _update()
 		e.update()
 	end)
 
-	foreach(stars, function(s)
-		s.y+=s.dy
-		if (s.y > 104) then
-			s.y=0
-			s.x=rnd(120)+4
-		end
-	end)
-
 	foreach(explosions, function(exp)
 		if exp.lifespan < 1 then
 			del(explosions,exp)
@@ -98,12 +133,8 @@ function _update()
 	update_shake()
 end
 
-function _draw()
-	cls()
-
-	for s in all(stars) do
-		pset(s.x,s.y,6)
-	end
+function game_draw()
+	draw_stars()
 
 	spr(p.sp, p.x, p.y)
 
@@ -135,6 +166,34 @@ function _draw()
  map(0,12,0,96,16,4)
 end
 
+function gameover_update()
+	update_stars()
+	if (btn(2)) reset_game(1)
+end
+
+function gameover_draw()
+	draw_stars()
+	print("game over ", 20,30)
+	print("score: "..score,20,50)
+	print("press up to try again", 20,70)
+end
+
+function draw_stars()
+	for s in all(stars) do
+		pset(s.x,s.y,6)
+	end
+end
+
+function update_stars()
+	foreach(stars, function(s)
+		s.y+=s.dy
+		if (s.y > 104) then
+			s.y=0
+			s.x=rnd(120)+4
+		end
+	end)
+end
+
 function draw_score()
 	print("tacos: "..score,48,0)
 end
@@ -160,7 +219,8 @@ function player()
 		dy = 0,
 		sp = 3,
 		hitbox = {x=0,y=0,w=8,h=8},
-		health = 3,
+		health = 1,
+		maxhealth = 1,
 		ammo = 1000
 	}
 
@@ -202,17 +262,20 @@ function shake(time)
 end
 
 function update_shake()
-	local amt = 3
+	local amt = 1
 
 	if (shaking and shaketimer > 0) then
-		amt = shaketimer/2
-		local _x = p.x - 64 + rnd(amt)-amt
-		local _y = p.y - 90 + rnd(amt)-amt
+		amt = shaketimer/1
+		-- local _x = p.x - 64 + rnd(amt)-amt
+		-- local _y = p.y - 90 + rnd(amt)-amt
+		local _x = rnd(amt)-amt
+		local _y = rnd(amt)-amt
 
 		camera(_x, _y)
 		shaketimer-=1
 	else
-		camera(p.x - 64, p.y - 90)
+		-- camera(p.x - 64, p.y - 90)
+		camera()
 	end
 end
 
@@ -379,6 +442,7 @@ function animate(s)
 		s.sp = s.anim[s.index]
 	end
 end
+
 __gfx__
 000000004444444407777770944a4494000000000000000000000000000000000000000008800880088088000000000000000000000000000000000000000000
 0000000047777774700000074a999a9a000000000000000000000000000000000000000088888888888888800000000000000000000000000000000000000000
