@@ -65,7 +65,7 @@ function game_update()
 	t = t+1
 	move()
 
-	if (rnd(300)<15) then
+	if ((rnd(300) < 15) and (t > lasttaco + 100)) then
 		spawn_taco()
 	end
 
@@ -78,18 +78,7 @@ function game_update()
 	end
 
 	update_stars()
-
-	foreach(tacos, function(t)
-		t.y = t.y + t.dy
-		if (t.y > 148) del(tacos,t)
-
-		if (collide(t,p) and p.sp==2) then
-			del(tacos,t)
-			sfx(2)
-			score+=5
-			p.ammo+=5
-		end
-	end)
+	update_tacos()
 
 	foreach(enemy_bullets, function(b)
 		b.y = b.y + b.dy
@@ -146,10 +135,7 @@ function game_draw()
 		spr(b.sp, b.x, b.y)
 	end
 
-	for t in all(tacos) do
-		spr(t.sp, t.x, t.y)
-		animate(t)
-	end
+	draw_tacos()
 
 	for e in all(enemies) do
 		spr(e.sp, e.x, e.y)
@@ -168,12 +154,18 @@ function game_draw()
 end
 
 function gameover_update()
+	t = t+1
+	shaking = false
+	camera(0,0)
 	update_stars()
+	update_tacos()
+	spawn_taco()
 	if (btn(2)) reset_game(1)
 end
 
 function gameover_draw()
 	draw_stars()
+	draw_tacos()
 	map(0,12,0,96,16,4)
 	print("game over ", 20,30)
 	print("score: "..score,20,50)
@@ -302,7 +294,7 @@ function shoot()
 		dx = 0,
 		dy = 6,
 		sp = 16,
-		hitbox={x=0,y=0,w=2,h=6}
+		hitbox={x=3,y=2,w=2,h=4}
 	}
 
 	add(bullets, b)
@@ -317,10 +309,8 @@ end
 
 -- actors --
 function spawn_taco()
- if (t < lasttaco + 100) return
-
 	local taco = {
-		x=rnd(104)+16,
+		x=rnd(104)+8,
 		y= -rnd(32)-16,
 		dy=rnd(1)+0.5,
 		sp=7,
@@ -333,6 +323,27 @@ function spawn_taco()
 	lasttaco = t
 end
 
+function update_tacos()
+	foreach(tacos, function(t)
+		t.y = t.y + t.dy
+		if (t.y > 148) del(tacos,t)
+
+		if (collide(t,p) and p.sp==2) then
+			del(tacos,t)
+			sfx(2)
+			score+=5
+			p.ammo+=5
+		end
+	end)
+end
+
+function draw_tacos()
+	for t in all(tacos) do
+		spr(t.sp, t.x, t.y)
+		animate(t)
+	end
+end
+
 function spawn_skull()
 	local s = {
 		x=rnd(104)+16,
@@ -341,7 +352,7 @@ function spawn_skull()
 		sp=32,
 		index=1,
 		anim={32,33},
-		hitbox={x=0,y=0,w=6,h=8},
+		hitbox={x=1,y=0,w=6,h=8},
 		hp=1
 	}
 
@@ -392,7 +403,7 @@ function spawn_cryer()
 			dx = 0,
 			dy = 1.5,
 			sp = 17,
-			hitbox={x=0,y=0,w=6,h=8}
+			hitbox={x=3,y=2,w=2,h=4}
 		}
 
 		add(enemy_bullets, b)
