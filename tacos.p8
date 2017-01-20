@@ -310,7 +310,7 @@ end
 -- actors --
 function spawn_taco()
 	local taco = {
-		x=rnd(104)+8,
+		x=rnd(120),
 		y= -rnd(32)-16,
 		dy=rnd(1)+0.5,
 		sp=7,
