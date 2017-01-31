@@ -16,15 +16,16 @@ enemies = {}
 enemy_bullets = {}
 stars = {}
 explosions = {}
+maxEnemies = 0
 
 function _init()
 	p = player()
 	create_stars()
+	start_level(level)
 end
 
-function reset_game(lvl)
-	lvl = 1
-
+function reset_game()
+	level = 1
 	p = player()
 	t = 0
 	lastshot = 0
@@ -32,7 +33,6 @@ function reset_game(lvl)
 	shaking = false
 	shaketimer = 0
 	score = 0
-	level = lvl
 	gameover = false
 
 	tacos = {}
@@ -41,6 +41,41 @@ function reset_game(lvl)
 	enemy_bullets = {}
 	stars = {}
 	explosions = {}
+
+	maxEnemies = level+1*(rnd(3)+1)
+	makeEnemies(maxEnemies)
+end
+
+function start_level(lvl)
+	t = 0
+	lastshot = 0
+	lasttaco = 0
+	shaking = false
+	shaketimer = 0
+	score = 0
+	gameover = false
+
+	tacos = {}
+	bullets = {}
+	enemies = {}
+	enemy_bullets = {}
+	stars = {}
+	explosions = {}
+
+	maxEnemies = lvl+1*(rnd(3)+1)
+	makeEnemies(maxEnemies)
+end
+
+function makeEnemies(max)
+	local r
+	for e=1,max do
+		r = rnd(max-1)+1
+		if (r<max/3) then
+			spawn_cryer()
+		else
+			spawn_skull()
+		end
+	end
 end
 
 function _update()
@@ -63,18 +98,16 @@ end
 
 function game_update()
 	t = t+1
+
+	if (tableLength(enemies) < 1 and tableLength(tacos) < 1) then
+		level+=1
+		start_level(level)
+	end
+
 	move()
 
 	if ((rnd(300) < 15) and (t > lasttaco + 100)) then
 		spawn_taco()
-	end
-
-	if (rnd(300)<5) then
-		spawn_skull()
-	end
-
-	if (rnd(300)<5) then
-		spawn_cryer()
 	end
 
 	update_stars()
@@ -159,7 +192,7 @@ function gameover_update()
 	update_stars()
 	update_tacos()
 	spawn_taco()
-	if (btn(2)) reset_game(1)
+	if (btn(2)) reset_game()
 end
 
 function gameover_draw()
@@ -339,13 +372,14 @@ end
 function spawn_skull()
 	local s = {
 		x=rnd(104)+16,
-		y= -rnd(32)-16,
+		--y= -rnd(32)-16,
+		y= -rnd(maxEnemies*16)-16,
 		dy=rnd(1)+0.3,
 		sp=32,
 		index=1,
 		anim={32,33},
 		hitbox={x=1,y=0,w=6,h=8},
-		hp=1
+		hp=2
 	}
 
 	s.update = function() end
@@ -370,14 +404,14 @@ end
 function spawn_cryer()
 	local s = {
 		x=rnd(104)+16,
-		y= -rnd(32)-16,
+		y= -rnd(maxEnemies*16)-16,
 		dy=rnd(0.3)+0.5,
 		sp=34,
 		index=1,
 		anim={34,35},
 		hitbox={x=0,y=0,w=8,h=8},
 		lastshot=rnd(128),
-		hp=2
+		hp=rnd(3)+1
 	}
 
 	s.update = function()
@@ -417,6 +451,15 @@ function spawn_cryer()
 
 	add(enemies,s)
 end
+
+-- utility
+
+function tableLength(t)
+  local count = 0
+  for _ in pairs(t) do count = count + 1 end
+  return count
+end
+
 
 -- collisions
 
